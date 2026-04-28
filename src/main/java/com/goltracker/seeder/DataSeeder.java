@@ -8,6 +8,7 @@ import com.goltracker.team.domain.Team;
 import com.goltracker.team.repository.TeamRepository;
 import com.goltracker.tournament.domain.Tournament;
 import com.goltracker.tournament.repository.TournamentRepository;
+import com.goltracker.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,9 +28,19 @@ public class DataSeeder implements ApplicationRunner {
     private final TeamRepository       teamRepository;
     private final MatchRepository      matchRepository;
     private final TournamentRepository tournamentRepository;
+    private final UserService          userService;
 
     @Value("${app.seeder.enabled:true}")
     private boolean enabled;
+
+    @Value("${app.seeder.admin.username:willUserGest}")
+    private String adminUsername;
+
+    @Value("${app.seeder.admin.password:Master2026}")
+    private String adminPassword;
+
+    @Value("${app.seeder.admin.email:admin@goltracker.com}")
+    private String adminEmail;
 
     private Tournament wc2026;
 
@@ -40,6 +51,7 @@ public class DataSeeder implements ApplicationRunner {
             log.info("Seeder desactivado (app.seeder.enabled=false).");
             return;
         }
+        seedAdminUser();
         if (teamRepository.count() == 0) {
             log.info("Sembrando torneo, equipos y partidos...");
             seedTournament();
@@ -47,6 +59,11 @@ public class DataSeeder implements ApplicationRunner {
             seedMatches();
             log.info("Seed completado.");
         }
+    }
+
+    private void seedAdminUser() {
+        userService.createAdminUser(adminUsername, adminEmail, adminPassword);
+        log.info("Usuario admin '{}' verificado/creado.", adminUsername);
     }
 
     private void seedTournament() {
