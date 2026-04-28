@@ -1,0 +1,22 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/goltracker
+    driver-class-name: org.postgresql.Driver
+    username: gol_user
+    password: g#lind=%
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+  mail:
+    username: goltracker.noreply@gmail.com
+    password: owflmpjuxkgqtywu
+  threads:
+    virtual:
+      enabled: true
+
+app:
+  seeder:
+    enabled: true   # true = siembra al arrancar si la BD está vacía | false = no hace nada

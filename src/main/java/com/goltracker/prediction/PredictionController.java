@@ -1,0 +1,43 @@
+package com.goltracker.prediction;
+
+import com.goltracker.prediction.dto.PredictionRequest;
+import com.goltracker.prediction.dto.PredictionResponse;
+import com.goltracker.prediction.dto.PredictionSummaryDto;
+import com.goltracker.prediction.service.PredictionService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/predictions")
+@RequiredArgsConstructor
+public class PredictionController {
+
+    private final PredictionService predictionService;
+
+    // GET /api/predictions  → todas las predicciones del usuario autenticado
+    @GetMapping
+    public List<PredictionResponse> list(@AuthenticationPrincipal UserDetails user) {
+        return predictionService.findAllForUser(user.getUsername());
+    }
+
+    // PUT /api/predictions/{matchId}  → crear o actualizar predicción
+    @PutMapping("/{matchId}")
+    public PredictionResponse upsert(
+            @AuthenticationPrincipal UserDetails user,
+            @PathVariable Long matchId,
+            @Valid @RequestBody PredictionRequest request
+    ) {
+        return predictionService.upsert(user.getUsername(), matchId, request);
+    }
+
+    // GET /api/predictions/summary  → resumen de puntos del usuario
+    @GetMapping("/summary")
+    public PredictionSummaryDto summary(@AuthenticationPrincipal UserDetails user) {
+        return predictionService.summary(user.getUsername());
+    }
+}
