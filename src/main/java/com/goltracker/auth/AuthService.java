@@ -9,6 +9,7 @@ import com.goltracker.user.domain.UserStatus;
 import com.goltracker.user.repository.UserRepository;
 import com.goltracker.user.service.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.Random;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -39,14 +41,21 @@ public class AuthService {
     public AuthResponse login(LoginRequest request) {
         try {
             User user = userService.findByUsername(request.username());
+            log.info("[Auth] Usuario encontrado: '{}', status={}, role={}",
+                    user.getUsername(), user.getStatus(), user.getRole());
             if (user.getStatus() == UserStatus.PENDING_VERIFICATION) {
+                log.warn("[Auth] Login rechazado — usuario '{}' tiene status PENDING_VERIFICATION", request.username());
                 throw ApiException.badRequest("Debés verificar tu correo antes de iniciar sesión.");
             }
             if (user.getStatus() == UserStatus.REJECTED) {
+                log.warn("[Auth] Login rechazado — usuario '{}' tiene status REJECTED", request.username());
                 throw ApiException.badRequest("Tu solicitud fue rechazada. Contactá al administrador.");
             }
-        } catch (UsernameNotFoundException ignored) {}
+        } catch (UsernameNotFoundException e) {
+            log.warn("[Auth] Usuario '{}' no encontrado en la base de datos", request.username());
+        }
 
+        log.info("[Auth] Autenticando credenciales para '{}'", request.username());
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.username(), request.password())
         );

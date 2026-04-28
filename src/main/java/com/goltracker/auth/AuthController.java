@@ -3,9 +3,11 @@ package com.goltracker.auth;
 import com.goltracker.auth.dto.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -15,7 +17,11 @@ public class AuthController {
 
     @PostMapping("/login")
     public AuthResponse login(@Valid @RequestBody LoginRequest request) {
-        return authService.login(request);
+        log.info("[Auth] Intento de login para usuario: '{}'", request.username());
+        AuthResponse response = authService.login(request);
+        log.info("[Auth] Login exitoso para '{}', role={}, requiresReset={}",
+                request.username(), response.role(), response.requiresPasswordReset());
+        return response;
     }
 
     /** Registro público: envía correo de verificación, NO devuelve JWT. */
