@@ -17,3 +17,5 @@ COPY --from=build /app/target/gol-tracker-backend-1.0.0.jar app.jar
 
 EXPOSE 8050
 
+CMD ["java", "-jar", "app.jar"]
+
