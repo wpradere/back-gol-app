@@ -43,6 +43,7 @@ public class DataSeeder implements ApplicationRunner {
     private String adminEmail;
 
     private Tournament wc2026;
+    private Tournament champLeague;
 
     @Override
     @Transactional
@@ -52,13 +53,8 @@ public class DataSeeder implements ApplicationRunner {
             return;
         }
         seedAdminUser();
-        if (teamRepository.count() == 0) {
-            log.info("Sembrando torneo, equipos y partidos...");
-            seedTournament();
-            seedTeams();
-            seedMatches();
-            log.info("Seed completado.");
-        }
+        seedWorldCup();
+        seedChampionsLeague();
     }
 
     private void seedAdminUser() {
@@ -66,16 +62,24 @@ public class DataSeeder implements ApplicationRunner {
         log.info("Usuario admin '{}' verificado/creado.", adminUsername);
     }
 
-    private void seedTournament() {
-        var tournaments = tournamentRepository.findByEnabledTrueOrderBySortOrderAsc();
-        if (tournaments.isEmpty()) {
-            throw new IllegalStateException("No hay ningún torneo activo en la BD. Creá uno antes de ejecutar el seeder.");
+    // ── Mundial 2026 ───────────────────────────────────────────────────────
+
+    private void seedWorldCup() {
+        wc2026 = tournamentRepository.findByShortNameIgnoreCase("Mundial 2026")
+                .orElseThrow(() -> new IllegalStateException(
+                        "Torneo 'Mundial 2026' no encontrado. Verificá la migración V4."));
+        long wcTeams = teamRepository.countByTournamentId(wc2026.getId());
+        if (wcTeams > 0) {
+            log.info("Mundial 2026 ya tiene {} equipos — omitiendo seed.", wcTeams);
+            return;
         }
-        wc2026 = tournaments.get(0);
-        log.info("Usando torneo: {} (id={})", wc2026.getName(), wc2026.getId());
+        log.info("Sembrando equipos y partidos del Mundial 2026...");
+        seedWCTeams();
+        seedWCMatches();
+        log.info("Seed Mundial 2026 completado.");
     }
 
-    private void seedTeams() {
+    private void seedWCTeams() {
         var all = new ArrayList<Team>();
         all.addAll(seedGroupA());
         all.addAll(seedGroupB());
@@ -90,6 +94,101 @@ public class DataSeeder implements ApplicationRunner {
         all.addAll(seedGroupK());
         all.addAll(seedGroupL());
         teamRepository.saveAll(all);
+    }
+
+    // ── Champions League ───────────────────────────────────────────────────
+
+    private void seedChampionsLeague() {
+        champLeague = tournamentRepository.findByShortNameIgnoreCase("champleage")
+                .orElseThrow(() -> new IllegalStateException(
+                        "Torneo 'champleage' no encontrado. Verificá la migración V9."));
+        long clTeams = teamRepository.countByTournamentId(champLeague.getId());
+        if (clTeams > 0) {
+            log.info("Champions League ya tiene {} equipos — omitiendo seed.", clTeams);
+            return;
+        }
+        log.info("Sembrando equipos y partidos del Champions League...");
+        seedCLTeams();
+        seedCLMatches();
+        log.info("Seed Champions League completado.");
+    }
+
+    private void seedCLTeams() {
+        var all = new ArrayList<Team>();
+        all.add(clTeam("Paris Saint-Germain", "psg", "A",
+            List.of(sc("O. Dembélé", 6), sc("G. Ramos", 7), sc("B. Barcola", 5)),
+            List.of(
+                plCL("Matvei Safonov",      39, "POR", 27, "FC Krasnodar",        10, 0, 0),
+                plCL("Achraf Hakimi",        2, "DEF", 27, "Inter de Milán",      11, 2, 4),
+                plCL("Lucas Hernández",     21, "DEF", 30, "Bayern Múnich",        9, 0, 1),
+                plCL("Marquinhos",           4, "DEF", 31, "AS Roma",             11, 1, 0),
+                plCL("Nuno Mendes",         25, "DEF", 23, "Sporting CP",         10, 1, 2),
+                plCL("Fabián Ruiz",          8, "MED", 30, "SSC Napoli",           9, 1, 2),
+                plCL("Vitinha",             17, "MED", 26, "FC Porto",            11, 3, 5),
+                plCL("Warren Zaïre-Emery", 33, "MED", 20, "Cantera (PSG)",        11, 2, 3),
+                plCL("Bradley Barcola",     29, "DEL", 23, "Olympique Lyon",      10, 5, 3),
+                plCL("Gonçalo Ramos",        9, "DEL", 24, "Benfica",             11, 7, 2),
+                plCL("Ousmane Dembélé",     10, "DEL", 28, "FC Barcelona",        11, 6, 8))));
+
+        all.add(clTeam("Bayern Múnich", "FC", "A",
+            List.of(sc("H. Kane", 10), sc("L. Díaz", 8), sc("J. Musiala", 5)),
+            List.of(
+                plCL("Manuel Neuer",      1, "POR", 40, "Schalke 04",            11, 0, 0),
+                plCL("Alphonso Davies",  19, "DEF", 25, "Vancouver Whitecaps",   11, 2, 3),
+                plCL("Dayot Upamecano",   2, "DEF", 27, "RB Leipzig",            10, 0, 0),
+                plCL("Joshua Kimmich",    6, "DEF", 31, "RB Leipzig",            11, 1, 5),
+                plCL("Kim Min-jae",       3, "DEF", 29, "SSC Napoli",            10, 1, 0),
+                plCL("Jamal Musiala",    42, "MED", 23, "Chelsea FC",            11, 5, 6),
+                plCL("Leroy Sané",       10, "MED", 30, "Manchester City",        9, 3, 4),
+                plCL("Michael Olise",    17, "MED", 24, "Crystal Palace",        10, 4, 5),
+                plCL("Harry Kane",        9, "DEL", 32, "Tottenham Hotspur",     11,10, 3),
+                plCL("Luis Díaz",         7, "DEL", 29, "Liverpool FC",          11, 8, 6),
+                plCL("Mathys Tel",       39, "DEL", 21, "Stade Rennais",          8, 2, 1))));
+
+        all.add(clTeam("Arsenal", "ARS", "B",
+            List.of(sc("B. Saka", 6), sc("K. Havertz", 5), sc("G. Martinelli", 4)),
+            List.of(
+                plCL("David Raya",           22, "POR", 30, "Brentford FC",          10, 0, 0),
+                plCL("Ben White",             4, "DEF", 28, "Brighton",              10, 0, 2),
+                plCL("Gabriel Magalhães",     6, "DEF", 28, "LOSC Lille",            10, 2, 0),
+                plCL("Jurriën Timber",       12, "DEF", 24, "AFC Ajax",               8, 0, 1),
+                plCL("William Saliba",        2, "DEF", 25, "AS Saint-Étienne",      10, 1, 0),
+                plCL("Bukayo Saka",           7, "MED", 24, "Cantera (Arsenal)",     10, 6, 5),
+                plCL("Declan Rice",          41, "MED", 27, "West Ham United",       10, 1, 3),
+                plCL("Martin Ødegaard",       8, "MED", 27, "Real Madrid",           10, 3, 7),
+                plCL("Gabriel Martinelli",   11, "DEL", 24, "Ituano FC",              9, 4, 3),
+                plCL("Kai Havertz",          29, "DEL", 26, "Chelsea FC",            10, 5, 4),
+                plCL("Leandro Trossard",     19, "DEL", 31, "Brighton",              10, 3, 2))));
+
+        all.add(clTeam("Atlético de Madrid", "atm", "B",
+            List.of(sc("A. Griezmann", 6), sc("J. Álvarez", 5), sc("A. Sørloth", 4)),
+            List.of(
+                plCL("Jan Oblak",           13, "POR", 33, "Benfica",              10, 0, 0),
+                plCL("Josema Giménez",       2, "DEF", 31, "Danubio FC",           8, 1, 0),
+                plCL("Nahuel Molina",       16, "DEF", 28, "Udinese",              9, 1, 2),
+                plCL("Reinildo Mandava",    23, "DEF", 32, "Lille OSC",            10, 0, 0),
+                plCL("Robin Le Normand",    24, "DEF", 29, "Real Sociedad",        10, 0, 0),
+                plCL("Koke Resurrección",    6, "MED", 34, "Cantera (Atleti)",     10, 0, 4),
+                plCL("Marcos Llorente",     14, "MED", 31, "Real Madrid",          10, 2, 3),
+                plCL("Rodrigo De Paul",      5, "MED", 31, "Udinese",              9, 1, 2),
+                plCL("Alexander Sørloth",    9, "DEL", 30, "Villarreal CF",        9, 4, 1),
+                plCL("Antoine Griezmann",    7, "DEL", 35, "Real Sociedad",        10, 6, 5),
+                plCL("Julián Alvarez",      19, "DEL", 26, "Manchester City",      10, 5, 3))));
+
+        teamRepository.saveAll(all);
+    }
+
+    private void seedCLMatches() {
+        var all = teamRepository.findByTournamentId(champLeague.getId());
+        var byName = new java.util.HashMap<String, Team>();
+        for (var t : all) byName.put(t.getName(), t);
+
+        var matches = new ArrayList<Match>();
+        matches.add(clMatch(byName, "Bayern Múnich",      "Paris Saint-Germain",
+                "A", "2026-05-05 14:00", "Allianz Arena (Múnich)"));
+        matches.add(clMatch(byName, "Arsenal",            "Atlético de Madrid",
+                "B", "2026-05-05 14:00", "Emirates Stadium (Londres)"));
+        matchRepository.saveAll(matches);
     }
 
     // ── Grupo A: México · Sudáfrica · Corea del Sur · Rep. Checa ──────────
@@ -1202,8 +1301,8 @@ public class DataSeeder implements ApplicationRunner {
         return List.of(england, panama, croatia, ghana);
     }
 
-    // ── Matches ────────────────────────────────────────────────────────────
-    private void seedMatches() {
+    // ── Partidos Mundial 2026 ──────────────────────────────────────────────
+    private void seedWCMatches() {
         var all    = teamRepository.findAll();
         var byName = new java.util.HashMap<String, Team>();
         for (var t : all) byName.put(t.getName(), t);
@@ -1353,7 +1452,7 @@ public class DataSeeder implements ApplicationRunner {
         matchRepository.saveAll(matches);
     }
 
-    // ── Builder helpers ────────────────────────────────────────────────────
+    // ── Builder helpers – Mundial 2026 ────────────────────────────────────
 
     private Team team(String name,String flag,String conf,String group,
                       int p,int w,int d,int l,int gf,int ga,
@@ -1392,5 +1491,31 @@ public class DataSeeder implements ApplicationRunner {
     private Match phMatch(String stage,String date,String stadium){
         return Match.builder().groupName(stage).matchDate(date).stadium(stadium)
                 .played(false).tournament(wc2026).build();
+    }
+
+    // ── Builder helpers – Champions League ────────────────────────────────
+
+    private Team clTeam(String name, String flag, String group,
+                        List<Scorer> sc, List<Player> pl) {
+        var t = Team.builder().name(name).flag(flag).confederation("Champion")
+                .groupName(group).tournament(champLeague).build();
+        for (var s : sc) { s.setTeam(t); t.getScorers().add(s); }
+        for (var p : pl) { p.setTeam(t);  t.getPlayers().add(p); }
+        return t;
+    }
+
+    private Player plCL(String name, int number, String pos, int age,
+                        String club, int g, int gls, int ast) {
+        return Player.builder().name(name).number(number).position(pos).age(age)
+                .club(club).games(g).goals(gls).assists(ast).isStarter(true).build();
+    }
+
+    private Match clMatch(java.util.Map<String, Team> byName,
+                          String a, String b, String group,
+                          String date, String stadium) {
+        return Match.builder()
+                .teamA(byName.get(a)).teamB(byName.get(b))
+                .groupName(group).matchDate(date).stadium(stadium)
+                .played(false).tournament(champLeague).build();
     }
 }

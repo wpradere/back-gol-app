@@ -35,5 +35,5 @@ gol-tracker:
 logging:
   level:
     com.goltracker: DEBUG
-    org.springframework.security: WARN
+    org.springframework.security: DEBUG
     org.flywaydb: INFO

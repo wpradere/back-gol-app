@@ -46,7 +46,13 @@ public class ImportController {
         return importService.importMatchesCsv(file);
     }
 
-    /** Importa jugadores desde un CSV con torneo_corto y equipo_nombre por fila. */
+    /** Importa equipos y jugadores desde un CSV combinado. */
+    @PostMapping("/teams-players/csv")
+    public ImportResult importTeamsAndPlayers(@RequestParam("file") MultipartFile file) {
+        return importService.importTeamsAndPlayers(file);
+    }
+
+    /** @deprecated Usar /teams-players/csv */
     @PostMapping("/players")
     public ImportResult importPlayers(@RequestParam("file") MultipartFile file) {
         return importService.importPlayers(file);

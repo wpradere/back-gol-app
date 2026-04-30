@@ -39,7 +39,7 @@ public class AdminService {
 
     @Transactional(readOnly = true)
     public List<AdminMatchDto> getAllMatches() {
-        return matchRepository.findAllWithTeams()
+        return matchRepository.findAllFromEnabledTournaments()
                 .stream()
                 .map(AdminMatchDto::from)
                 .toList();
@@ -127,7 +127,7 @@ public class AdminService {
 
     @Transactional(readOnly = true)
     public List<TeamSummaryDto> getAllTeams() {
-        return teamRepository.findAllOrdered()
+        return teamRepository.findAllFromEnabledTournaments()
                 .stream()
                 .map(TeamSummaryDto::from)
                 .toList();

@@ -417,6 +417,93 @@ public class ImportService {
         return new ImportResult(imported, updated, errors.size(), errors);
     }
 
+    // ── Equipos + Jugadores (CSV combinado) ───────────────────────────────
+    // Columnas: torneo_corto,grupo,equipo_nombre,equipo_bandera,confederacion,
+    //           nombre,numero,posicion,edad,club,partidos,goles,asistencias
+    // El equipo se crea si no existe (con estadísticas en 0); si ya existe
+    // sólo se actualizan bandera, confederación y grupo — nunca las estadísticas.
+
+    @Transactional
+    public ImportResult importTeamsAndPlayers(MultipartFile file) {
+        int imported = 0, updated = 0;
+        List<String> errors = new ArrayList<>();
+
+        try (CSVParser parser = CSVFormat.DEFAULT
+                .builder()
+                .setHeader()
+                .setSkipHeaderRecord(true)
+                .setTrim(true)
+                .setIgnoreEmptyLines(true)
+                .build()
+                .parse(bomSafeReader(file))) {
+
+            for (CSVRecord row : parser) {
+                long lineNum = row.getRecordNumber() + 1;
+                try {
+                    String tCorto     = row.get("torneo_corto").trim();
+                    String grupo      = row.get("grupo").trim().toUpperCase();
+                    String equipoNom  = row.get("equipo_nombre").trim();
+                    String equipoBan  = row.get("equipo_bandera").trim();
+                    String conf       = row.get("confederacion").trim();
+                    String nombre     = row.get("nombre").trim();
+                    int    numero     = parseInt(row, "numero");
+                    String posicion   = row.get("posicion").trim().toUpperCase();
+                    int    edad       = parseInt(row, "edad");
+                    String club       = row.get("club").trim();
+                    int    partidos   = parseInt(row, "partidos");
+                    int    goles      = parseInt(row, "goles");
+                    int    asist      = parseInt(row, "asistencias");
+
+                    Tournament tournament = tournamentRepository
+                            .findByShortNameIgnoreCase(tCorto)
+                            .orElseThrow(() -> new IllegalArgumentException("Torneo no encontrado: " + tCorto));
+
+                    Team team = teamRepository
+                            .findByNameIgnoreCaseAndTournamentId(equipoNom, tournament.getId())
+                            .orElse(null);
+
+                    if (team == null) {
+                        team = teamRepository.save(Team.builder()
+                                .tournament(tournament)
+                                .name(equipoNom).flag(equipoBan).confederation(conf).groupName(grupo)
+                                .played(0).won(0).drawn(0).lost(0).goalsFor(0).goalsAgainst(0)
+                                .build());
+                        log.info("[IMPORT-TAP] Equipo creado: {} en {}", equipoNom, tCorto);
+                    } else {
+                        team.setFlag(equipoBan);
+                        team.setConfederation(conf);
+                        team.setGroupName(grupo);
+                        teamRepository.save(team);
+                    }
+
+                    var opt = playerRepository.findByTeamIdAndNameIgnoreCase(team.getId(), nombre);
+                    if (opt.isPresent()) {
+                        Player p = opt.get();
+                        p.setNumber(numero); p.setPosition(posicion); p.setAge(edad);
+                        p.setClub(club); p.setGames(partidos); p.setGoals(goles);
+                        p.setAssists(asist);
+                        playerRepository.save(p);
+                        updated++;
+                    } else {
+                        playerRepository.save(Player.builder()
+                                .team(team).name(nombre).number(numero).position(posicion)
+                                .age(edad).club(club).games(partidos).goals(goles).assists(asist)
+                                .build());
+                        imported++;
+                    }
+                } catch (Exception ex) {
+                    errors.add("Línea " + lineNum + ": " + ex.getMessage());
+                    log.warn("[IMPORT-TAP] Línea {}: {}", lineNum, ex.getMessage());
+                }
+            }
+        } catch (Exception ex) {
+            errors.add("Error leyendo el archivo: " + ex.getMessage());
+        }
+
+        log.info("[IMPORT-TAP] Importados: {}, Actualizados: {}, Errores: {}", imported, updated, errors.size());
+        return new ImportResult(imported, updated, errors.size(), errors);
+    }
+
     // ── Jugadores ──────────────────────────────────────────────────────────
     // Columnas: torneo_corto,equipo_nombre,nombre,numero,posicion,edad,club,partidos,goles,asistencias
 
