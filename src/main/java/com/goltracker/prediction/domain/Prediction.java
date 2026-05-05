@@ -50,7 +50,8 @@ public class Prediction {
     // ── Lógica de puntuación ───────────────────────────────────────────────
     //
     // +2 pts: ganador correcto (o empate)
-    // +1 pt por cada puntaje predicho que aparezca en los goles reales (multiset)
+    // +1 pt: goles del equipo local predichos correctamente
+    // +1 pt: goles del equipo visitante predichos correctamente
     // Máximo posible: 4 pts (marcador exacto: 2 + 1 + 1)
 
     public void recalculatePoints() {
@@ -68,14 +69,9 @@ public class Prediction {
         String realWinner = rA > rB ? "A" : rA < rB ? "B" : "D";
         if (predWinner.equals(realWinner)) total += 2;
 
-        // 2. Matching de puntajes (multiset): +1 por cada valor predicho que
-        //    aparezca en los goles reales, independientemente del equipo.
-        java.util.List<Integer> remaining = new java.util.ArrayList<>(java.util.List.of(rA, rB));
-        for (int pv : new int[]{predictedScoreA, predictedScoreB}) {
-            if (remaining.remove(Integer.valueOf(pv))) {
-                total += 1;
-            }
-        }
+        // 2. +1 por cada gol que coincida con el equipo correcto
+        if (predictedScoreA == rA) total += 1;
+        if (predictedScoreB == rB) total += 1;
 
         this.points = total;
     }

@@ -4,6 +4,7 @@ import com.goltracker.core.exception.ApiException;
 import com.goltracker.match.domain.Match;
 import com.goltracker.match.repository.MatchRepository;
 import com.goltracker.prediction.domain.Prediction;
+import com.goltracker.prediction.dto.MatchPredictionEntryDto;
 import com.goltracker.prediction.dto.PredictionRequest;
 import com.goltracker.prediction.dto.PredictionResponse;
 import com.goltracker.prediction.dto.PredictionSummaryDto;
@@ -58,6 +59,29 @@ public class PredictionService {
         prediction.recalculatePoints();
 
         return PredictionResponse.from(predictionRepository.save(prediction));
+    }
+
+    @Transactional(readOnly = true)
+    public List<PredictionResponse> findAllForUserPublic(String username) {
+        User user = userService.findByUsername(username);
+        return predictionRepository.findByUserId(user.getId())
+                .stream()
+                .filter(p -> p.getMatch().isPlayed())
+                .map(PredictionResponse::from)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<MatchPredictionEntryDto> findAllForMatch(Long matchId) {
+        return predictionRepository.findByMatchIdWithUser(matchId)
+                .stream()
+                .map(p -> new MatchPredictionEntryDto(
+                        p.getUser().getUsername(),
+                        p.getPredictedScoreA(),
+                        p.getPredictedScoreB(),
+                        p.getPoints()
+                ))
+                .toList();
     }
 
     @PreAuthorize("#username == authentication.name")
