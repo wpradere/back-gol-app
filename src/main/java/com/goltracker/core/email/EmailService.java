@@ -18,7 +18,7 @@ public class EmailService {
     @Value("${spring.mail.username:}")
     private String fromEmail;
 
-    @Value("${gol-tracker.app.url:http://localhost:3000}")
+    @Value("${gol-tracker.app.url:https://auguriofutbolero.com}")
     private String appUrl;
 
     // ── Emails al usuario ──────────────────────────────────────────────────
@@ -28,7 +28,7 @@ public class EmailService {
 
         String body = """
                 <div style="font-family:sans-serif;max-width:600px;margin:auto">
-                  <h2 style="color:#009688">⚽ Gol!!! Tracker – Verificá tu correo</h2>
+                  <h2 style="color:#009688">⚽ Augurio Futbolero – Verificá tu correo</h2>
                   <p>Hola <strong>%s</strong>, gracias por registrarte.</p>
                   <p>Ingresá el siguiente código en la pantalla de verificación:</p>
                   <div style="margin:24px 0;text-align:center">
@@ -42,14 +42,14 @@ public class EmailService {
                 </div>
                 """.formatted(username, code);
 
-        send(to, "Código de verificación – Gol!!! Tracker", body);
+        send(to, "Código de verificación – Augurio Futbolero", body);
     }
 
     public void sendPasswordResetEmail(String to, String username, String code, String resetLink) {
         log.info("[EMAIL] Reset de contraseña para {} → código {}", to, code);
         String body = """
                 <div style="font-family:sans-serif;max-width:600px;margin:auto">
-                  <h2 style="color:#009688">🔒 Gol!!! Tracker – Cambio de contraseña</h2>
+                  <h2 style="color:#009688">🔒 Augurio Futbolero – Cambio de contraseña</h2>
                   <p>Hola <strong>%s</strong>, el administrador solicitó que cambies tu contraseña.</p>
                   <p>Hacé clic en el botón para continuar:</p>
                   <div style="margin:24px 0;text-align:center">
@@ -69,7 +69,7 @@ public class EmailService {
                   </p>
                 </div>
                 """.formatted(username, resetLink, code);
-        send(to, "Cambio de contraseña – Gol!!! Tracker", body);
+        send(to, "Cambio de contraseña – Augurio Futbolero", body);
     }
 
     public void sendApprovalEmail(String to, String username) {
@@ -78,11 +78,11 @@ public class EmailService {
                 <div style="font-family:sans-serif;max-width:600px;margin:auto">
                   <h2 style="color:#2e7d32">✅ ¡Tu cuenta fue aprobada!</h2>
                   <p>Hola <strong>%s</strong>, el administrador aprobó tu solicitud.</p>
-                  <p>Ya podés iniciar sesión en <a href="%s">Gol!!! Tracker</a>.</p>
+                  <p>Ya podés iniciar sesión en <a href="%s">Augurio Futbolero</a>.</p>
                 </div>
                 """.formatted(username, appUrl + "/login");
 
-        send(to, "¡Cuenta aprobada! – Gol!!! Tracker", body);
+        send(to, "¡Cuenta aprobada! – Augurio Futbolero", body);
     }
 
     public void sendRejectionEmail(String to, String username, String reason) {
@@ -99,7 +99,7 @@ public class EmailService {
                 </div>
                 """.formatted(username, reasonHtml);
 
-        send(to, "Solicitud rechazada – Gol!!! Tracker", body);
+        send(to, "Solicitud rechazada – Augurio Futbolero", body);
     }
 
     // ── Helper ─────────────────────────────────────────────────────────────

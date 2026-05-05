@@ -15,8 +15,8 @@
   <groupId>com.goltracker</groupId>
   <artifactId>gol-tracker-backend</artifactId>
   <version>1.0.0</version>
-  <name>gol-tracker-backend</name>
-  <description>Monolito modular – Gol Tracker API</description>
+  <name>augurio-futbolero-backend</name>
+  <description>Monolito modular – Augurio Futbolero API</description>
 
   <properties>
     <java.version>21</java.version>
