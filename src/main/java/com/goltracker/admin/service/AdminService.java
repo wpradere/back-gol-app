@@ -68,6 +68,10 @@ public class AdminService {
     public AdminMatchDto setKickoff(Long matchId, MatchKickoffRequest request) {
         Match match = getMatch(matchId);
         match.setKickoffAt(request.kickoffAt());
+        // If the new kickoff is more than 5 min away, reopen predictions automatically
+        if (request.kickoffAt().isAfter(LocalDateTime.now().plusMinutes(5))) {
+            match.setPredictionsLocked(false);
+        }
         return AdminMatchDto.from(matchRepository.save(match));
     }
 
