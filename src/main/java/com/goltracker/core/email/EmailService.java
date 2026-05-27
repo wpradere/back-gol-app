@@ -65,7 +65,7 @@ public class EmailService {
                     </span>
                   </div>
                   <p style="color:#888;font-size:12px;margin-top:24px">
-                    Este enlace y código expiran en 20 minutos. Si no solicitaste este cambio, ignorá este mensaje.
+                    Este enlace y código expiran en 1 hora. Si no solicitaste este cambio, ignorá este mensaje.
                   </p>
                 </div>
                 """.formatted(username, resetLink, code);

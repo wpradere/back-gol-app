@@ -70,7 +70,7 @@ public class AuthService {
                 String code       = String.format("%06d", new Random().nextInt(1_000_000));
                 user.setResetToken(resetToken);
                 user.setResetCode(code);
-                user.setResetTokenExpiry(LocalDateTime.now().plusMinutes(20));
+                user.setResetTokenExpiry(LocalDateTime.now().plusHours(1));
                 userRepository.save(user);
 
                 String link = appUrl + "/reset-password?token=" + resetToken;

@@ -1,5 +1,6 @@
 package com.goltracker.core.security;
 
+import com.goltracker.user.domain.User;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -42,6 +43,15 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 var userDetails = userDetailsService.loadUserByUsername(username);
                 if (jwtService.isValid(token, userDetails)) {
+                    // Si el admin forzó un cambio de contraseña, invalidar la sesión activa
+                    if (userDetails instanceof User u && u.isForcePasswordReset()) {
+                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                        response.setContentType("application/json;charset=UTF-8");
+                        response.getWriter().write(
+                            "{\"message\":\"Debes cambiar tu contraseña antes de continuar.\",\"forcePasswordReset\":true}"
+                        );
+                        return;
+                    }
                     var auth = new UsernamePasswordAuthenticationToken(
                             userDetails, null, userDetails.getAuthorities());
                     auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

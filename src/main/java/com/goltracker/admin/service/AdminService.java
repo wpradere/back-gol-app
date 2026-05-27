@@ -267,7 +267,7 @@ public class AdminService {
         user.setForcePasswordReset(true);
         user.setResetToken(resetToken);
         user.setResetCode(code);
-        user.setResetTokenExpiry(LocalDateTime.now().plusMinutes(20));
+        user.setResetTokenExpiry(LocalDateTime.now().plusHours(1));
         userRepository.save(user);
 
         // Enviar correo inmediatamente
