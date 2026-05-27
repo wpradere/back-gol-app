@@ -36,6 +36,7 @@ F:\Programacion\App-gestor-futbol\backend\src\main\java\com\goltracker\match\Mat
 F:\Programacion\App-gestor-futbol\backend\src\main\java\com\goltracker\match\repository\MatchRepository.java
 F:\Programacion\App-gestor-futbol\backend\src\main\java\com\goltracker\match\service\MatchService.java
 F:\Programacion\App-gestor-futbol\backend\src\main\java\com\goltracker\prediction\domain\Prediction.java
+F:\Programacion\App-gestor-futbol\backend\src\main\java\com\goltracker\prediction\dto\MatchPredictionEntryDto.java
 F:\Programacion\App-gestor-futbol\backend\src\main\java\com\goltracker\prediction\dto\PredictionRequest.java
 F:\Programacion\App-gestor-futbol\backend\src\main\java\com\goltracker\prediction\dto\PredictionResponse.java
 F:\Programacion\App-gestor-futbol\backend\src\main\java\com\goltracker\prediction\dto\PredictionSummaryDto.java

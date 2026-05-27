@@ -1,6 +1,7 @@
 package com.goltracker.admin.service;
 
 import com.goltracker.admin.dto.*;
+import com.goltracker.core.email.EmailService;
 import com.goltracker.core.exception.ApiException;
 import com.goltracker.match.domain.Match;
 import com.goltracker.match.repository.MatchRepository;
@@ -17,11 +18,14 @@ import com.goltracker.user.repository.UserRepository;
 import com.goltracker.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Random;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -34,6 +38,10 @@ public class AdminService {
     private final UserService          userService;
     private final PredictionRepository predictionRepository;
     private final TournamentRepository tournamentRepository;
+    private final EmailService         emailService;
+
+    @Value("${gol-tracker.app.url:https://auguriofutbolero.com}")
+    private String appUrl;
 
     // ── Partidos ───────────────────────────────────────────────────────────
 
@@ -251,9 +259,23 @@ public class AdminService {
     public UserSummaryDto forcePasswordReset(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> ApiException.notFound("Usuario no encontrado: " + userId));
+
+        // Generar token y código de verificación
+        String resetToken = UUID.randomUUID().toString();
+        String code       = String.format("%06d", new Random().nextInt(1_000_000));
+
         user.setForcePasswordReset(true);
-        log.info("Cambio de contraseña forzado para usuario: {}", user.getUsername());
-        return UserSummaryDto.from(userRepository.save(user));
+        user.setResetToken(resetToken);
+        user.setResetCode(code);
+        user.setResetTokenExpiry(LocalDateTime.now().plusMinutes(20));
+        userRepository.save(user);
+
+        // Enviar correo inmediatamente
+        String link = appUrl + "/reset-password?token=" + resetToken;
+        emailService.sendPasswordResetEmail(user.getEmail(), user.getUsername(), code, link);
+
+        log.info("Cambio de contraseña forzado y correo enviado para usuario: {}", user.getUsername());
+        return UserSummaryDto.from(user);
     }
 
     // ── Auto-lock (llamado desde el scheduler) ─────────────────────────────

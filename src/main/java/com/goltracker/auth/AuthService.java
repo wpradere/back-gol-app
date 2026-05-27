@@ -62,16 +62,21 @@ public class AuthService {
         User user = userService.findByUsername(request.username());
 
         if (user.isForcePasswordReset()) {
-            String resetToken = UUID.randomUUID().toString();
-            String code       = String.format("%06d", new Random().nextInt(1_000_000));
-            user.setResetToken(resetToken);
-            user.setResetCode(code);
-            user.setResetTokenExpiry(LocalDateTime.now().plusMinutes(20));
-            userRepository.save(user);
+            // Si el token expiró o no existe, generar uno nuevo y reenviar correo
+            boolean tokenExpired = user.getResetTokenExpiry() == null
+                    || LocalDateTime.now().isAfter(user.getResetTokenExpiry());
+            if (user.getResetToken() == null || tokenExpired) {
+                String resetToken = UUID.randomUUID().toString();
+                String code       = String.format("%06d", new Random().nextInt(1_000_000));
+                user.setResetToken(resetToken);
+                user.setResetCode(code);
+                user.setResetTokenExpiry(LocalDateTime.now().plusMinutes(20));
+                userRepository.save(user);
 
-            String link = appUrl + "/reset-password?token=" + resetToken;
-            emailService.sendPasswordResetEmail(user.getEmail(), user.getUsername(), code, link);
-
+                String link = appUrl + "/reset-password?token=" + resetToken;
+                emailService.sendPasswordResetEmail(user.getEmail(), user.getUsername(), code, link);
+                log.info("[Auth] Token expirado — nuevo correo de reset enviado a {}", user.getEmail());
+            }
             return new AuthResponse(null, user.getUsername(), user.getRole().name(),
                     user.getStatus().name(), true);
         }
