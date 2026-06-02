@@ -55,6 +55,7 @@ com\goltracker\match\dto\MatchDto.class
 com\goltracker\ranking\RankingController.class
 com\goltracker\core\config\WebConfig.class
 com\goltracker\core\security\JwtService.class
+com\goltracker\prediction\dto\MatchPredictionEntryDto.class
 com\goltracker\team\repository\PlayerRepository.class
 com\goltracker\seeder\DataSeeder.class
 com\goltracker\team\service\TeamService.class

@@ -16,8 +16,10 @@ public class RankingService {
     private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
-    public List<RankingEntryDto> getRanking() {
-        List<Object[]> rows = userRepository.findRankingRaw();
+    public List<RankingEntryDto> getRanking(Long tournamentId) {
+        List<Object[]> rows = tournamentId != null
+                ? userRepository.findRankingRawByTournament(tournamentId)
+                : userRepository.findRankingRaw();
         List<RankingEntryDto> result = new ArrayList<>(rows.size());
         for (int i = 0; i < rows.size(); i++) {
             Object[] row = rows.get(i);
