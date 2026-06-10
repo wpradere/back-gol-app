@@ -25,7 +25,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
                    COALESCE(SUM(p.points), 0)                             AS totalPoints,
                    COUNT(p.id)                                             AS predicted,
                    SUM(CASE WHEN p.points = 4  THEN 1 ELSE 0 END)         AS exactCount,
-                   SUM(CASE WHEN p.points >= 2 THEN 1 ELSE 0 END)         AS correctCount
+                   SUM(CASE WHEN p.points > 0  THEN 1 ELSE 0 END)         AS correctCount
             FROM users u
             LEFT JOIN predictions p ON p.user_id = u.id
             WHERE u.status = 'ACTIVE' AND u.role = 'USER'
@@ -39,7 +39,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
                    COALESCE(SUM(p.points), 0)                             AS totalPoints,
                    COUNT(p.id)                                             AS predicted,
                    SUM(CASE WHEN p.points = 4  THEN 1 ELSE 0 END)         AS exactCount,
-                   SUM(CASE WHEN p.points >= 2 THEN 1 ELSE 0 END)         AS correctCount
+                   SUM(CASE WHEN p.points > 0  THEN 1 ELSE 0 END)         AS correctCount
             FROM users u
             LEFT JOIN predictions p ON p.user_id = u.id
                    AND p.match_id IN (SELECT id FROM matches WHERE tournament_id = :tournamentId)

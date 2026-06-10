@@ -1,5 +1,0 @@
-# Created at 2026-06-02T11:46:24.238
-Boot Manifest-JAR contains absolute paths in classpath 'F:\Programacion\App-gestor-futbol\backend\target\test-classes'
-Hint: <argLine>-Djdk.net.URLClassPath.disableClassPathURLCheck=true</argLine>
-'other' has different root
-

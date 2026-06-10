@@ -260,7 +260,6 @@ public class AdminService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> ApiException.notFound("Usuario no encontrado: " + userId));
 
-        // Generar token y código de verificación
         String resetToken = UUID.randomUUID().toString();
         String code       = String.format("%06d", new Random().nextInt(1_000_000));
 
@@ -268,13 +267,13 @@ public class AdminService {
         user.setResetToken(resetToken);
         user.setResetCode(code);
         user.setResetTokenExpiry(LocalDateTime.now().plusHours(1));
-        userRepository.save(user);
+        userRepository.saveAndFlush(user); // flush garantiza que el token está en BD antes de enviar el correo
 
-        // Enviar correo inmediatamente
         String link = appUrl + "/reset-password?token=" + resetToken;
         emailService.sendPasswordResetEmail(user.getEmail(), user.getUsername(), code, link);
 
-        log.info("Cambio de contraseña forzado y correo enviado para usuario: {}", user.getUsername());
+        log.info("[Admin] Reset forzado para '{}': token={}, expiry={}",
+                user.getUsername(), resetToken, user.getResetTokenExpiry());
         return UserSummaryDto.from(user);
     }
 

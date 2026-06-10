@@ -71,11 +71,11 @@ public class AuthService {
                 user.setResetToken(resetToken);
                 user.setResetCode(code);
                 user.setResetTokenExpiry(LocalDateTime.now().plusHours(1));
-                userRepository.save(user);
+                userRepository.saveAndFlush(user);
 
                 String link = appUrl + "/reset-password?token=" + resetToken;
                 emailService.sendPasswordResetEmail(user.getEmail(), user.getUsername(), code, link);
-                log.info("[Auth] Token expirado — nuevo correo de reset enviado a {}", user.getEmail());
+                log.info("[Auth] Token regenerado — correo de reset enviado a {}", user.getEmail());
             }
             return new AuthResponse(null, user.getUsername(), user.getRole().name(),
                     user.getStatus().name(), true);
@@ -102,12 +102,21 @@ public class AuthService {
     @Transactional
     public PasswordResetVerifyResponse verifyResetCode(PasswordResetVerifyRequest request) {
         User user = userRepository.findByResetToken(request.token())
-                .orElseThrow(() -> ApiException.badRequest("Enlace inválido o expirado."));
+                .orElseThrow(() -> {
+                    log.warn("[Reset] Token no encontrado en BD: '{}'", request.token());
+                    return ApiException.badRequest("Enlace inválido o expirado.");
+                });
+
+        log.info("[Reset] Verificando código para '{}': expiry={}, codeMatch={}",
+                user.getUsername(), user.getResetTokenExpiry(),
+                request.code().equals(user.getResetCode()));
 
         if (user.getResetTokenExpiry() == null || LocalDateTime.now().isAfter(user.getResetTokenExpiry())) {
-            throw ApiException.badRequest("El enlace expiró. Iniciá sesión nuevamente para recibir uno nuevo.");
+            log.warn("[Reset] Token expirado para '{}': expiró el {}", user.getUsername(), user.getResetTokenExpiry());
+            throw ApiException.badRequest("El enlace expiró. Inicia sesión nuevamente para recibir uno nuevo.");
         }
         if (!request.code().equals(user.getResetCode())) {
+            log.warn("[Reset] Código incorrecto para '{}'", user.getUsername());
             throw ApiException.badRequest("El código es incorrecto.");
         }
 
