@@ -12,6 +12,7 @@ import com.goltracker.team.repository.TeamRepository;
 import com.goltracker.tournament.domain.Tournament;
 import com.goltracker.tournament.dto.TournamentDto;
 import com.goltracker.tournament.repository.TournamentRepository;
+import com.goltracker.user.domain.Role;
 import com.goltracker.user.domain.User;
 import com.goltracker.user.domain.UserStatus;
 import com.goltracker.user.repository.UserRepository;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
@@ -275,6 +277,41 @@ public class AdminService {
         log.info("[Admin] Reset forzado para '{}': token={}, expiry={}",
                 user.getUsername(), resetToken, user.getResetTokenExpiry());
         return UserSummaryDto.from(user);
+    }
+
+    // ── Notificaciones de partidos próximos (llamado desde el scheduler) ──
+
+    @Transactional
+    public int sendMatchNotifications() {
+        LocalDateTime now   = LocalDateTime.now();
+        LocalDateTime limit = now.plusHours(10);
+
+        List<Match> upcoming = matchRepository.findMatchesNeedingNotification(now, limit);
+        if (upcoming.isEmpty()) return 0;
+
+        List<User> users = userRepository.findByStatusAndRole(UserStatus.ACTIVE, Role.USER);
+        if (users.isEmpty()) return 0;
+
+        DateTimeFormatter timeFmt = DateTimeFormatter.ofPattern("hh:mm a");
+
+        for (Match match : upcoming) {
+            String teamA      = match.getTeamA().getName();
+            String teamB      = match.getTeamB().getName();
+            String tournament = match.getTournament().getName();
+            String matchDate  = match.getMatchDate() != null ? match.getMatchDate() : "";
+            String kickoff    = match.getKickoffAt().format(timeFmt);
+
+            for (User user : users) {
+                emailService.sendMatchReminderEmail(
+                        user.getEmail(), user.getUsername(),
+                        teamA, teamB, matchDate, kickoff, tournament);
+            }
+            match.setNotificationSent(true);
+            matchRepository.save(match);
+            log.info("[Notificación] Recordatorio enviado para {} vs {} a {} usuario(s).",
+                    teamA, teamB, users.size());
+        }
+        return upcoming.size();
     }
 
     // ── Auto-lock (llamado desde el scheduler) ─────────────────────────────

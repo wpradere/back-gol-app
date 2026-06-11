@@ -57,4 +57,9 @@ public class Match {
     @Builder.Default
     @Column(name = "predictions_locked", nullable = false)
     private boolean predictionsLocked = false;
+
+    /** Cuando está en true ya se enviaron las notificaciones de recordatorio a los usuarios. */
+    @Builder.Default
+    @Column(name = "notification_sent", nullable = false)
+    private boolean notificationSent = false;
 }

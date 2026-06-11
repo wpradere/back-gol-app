@@ -17,11 +17,19 @@ public class MatchLockScheduler {
 
     private final AdminService adminService;
 
-    @Scheduled(fixedDelay = 60_000)   // cada 60 segundos
+    @Scheduled(fixedDelay = 60_000)        // cada 60 segundos
     public void checkAndLock() {
         int locked = adminService.autoLockDueMatches();
         if (locked > 0) {
             log.info("[Scheduler] {} partido(s) bloqueados automáticamente.", locked);
+        }
+    }
+
+    @Scheduled(fixedDelay = 3_600_000)    // cada hora
+    public void checkAndNotify() {
+        int notified = adminService.sendMatchNotifications();
+        if (notified > 0) {
+            log.info("[Scheduler] Recordatorios enviados para {} partido(s).", notified);
         }
     }
 }

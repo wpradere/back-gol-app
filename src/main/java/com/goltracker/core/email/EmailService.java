@@ -72,6 +72,36 @@ public class EmailService {
         send(to, "Cambio de contraseña – Augurio Futbolero", body);
     }
 
+    public void sendMatchReminderEmail(String to, String username,
+                                       String teamA, String teamB,
+                                       String matchDate, String kickoffTime,
+                                       String tournament) {
+        log.info("[EMAIL] Recordatorio de partido para {}: {} vs {}", to, teamA, teamB);
+        String body = """
+                <div style="font-family:sans-serif;max-width:600px;margin:auto">
+                  <h2 style="color:#009688">⚽ Augurio Futbolero – ¡Partido en menos de 10 horas!</h2>
+                  <p>Hola <strong>%s</strong>, te recordamos que pronto inicia un partido.</p>
+                  <div style="margin:24px 0;padding:20px;background:#f5f5f5;border-radius:12px;border-left:4px solid #009688">
+                    <p style="margin:0 0 8px 0;font-size:20px;font-weight:900;color:#111">%s vs %s</p>
+                    <p style="margin:0 0 4px 0;color:#555">🏆 %s</p>
+                    <p style="margin:0;color:#555">📅 %s &nbsp;·&nbsp; ⏰ %s</p>
+                  </div>
+                  <p>¡No olvides registrar tu predicción antes de que el partido comience!</p>
+                  <div style="margin:24px 0;text-align:center">
+                    <a href="%s"
+                       style="display:inline-block;padding:14px 32px;background:#009688;color:#fff;border-radius:12px;font-size:16px;font-weight:700;text-decoration:none">
+                      Ir a mis predicciones
+                    </a>
+                  </div>
+                  <p style="color:#888;font-size:12px;margin-top:24px">
+                    Este es un mensaje automático de Augurio Futbolero.
+                  </p>
+                </div>
+                """.formatted(username, teamA, teamB, tournament, matchDate, kickoffTime,
+                              appUrl + "/inicio");
+        send(to, "⚽ Recordatorio: " + teamA + " vs " + teamB + " – Augurio Futbolero", body);
+    }
+
     public void sendApprovalEmail(String to, String username) {
         log.info("[EMAIL] Aprobación enviada a {}", to);
         String body = """
