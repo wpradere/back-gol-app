@@ -31,7 +31,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             LEFT JOIN predictions p ON p.user_id = u.id
             WHERE u.status = 'ACTIVE' AND u.role = 'USER'
             GROUP BY u.id, u.username
-            ORDER BY totalPoints DESC, predicted DESC
+            ORDER BY totalPoints DESC, exactCount DESC, correctCount DESC
             """, nativeQuery = true)
     List<Object[]> findRankingRaw();
 
@@ -46,7 +46,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
                    AND p.match_id IN (SELECT id FROM matches WHERE tournament_id = :tournamentId)
             WHERE u.status = 'ACTIVE' AND u.role = 'USER'
             GROUP BY u.id, u.username
-            ORDER BY totalPoints DESC, predicted DESC
+            ORDER BY totalPoints DESC, exactCount DESC, correctCount DESC
             """, nativeQuery = true)
     List<Object[]> findRankingRawByTournament(@Param("tournamentId") Long tournamentId);
 }
