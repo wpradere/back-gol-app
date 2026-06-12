@@ -74,6 +74,13 @@ public class AdminController {
         return adminService.getAllTeams();
     }
 
+    /** Recalcula las estadísticas de todos los equipos desde los partidos jugados. */
+    @PostMapping("/teams/recalculate-stats")
+    public java.util.Map<String, Object> recalculateTeamStats() {
+        int count = adminService.recalculateAllTeamStats();
+        return java.util.Map.of("recalculated", count);
+    }
+
     @PutMapping("/teams/{id}/stats")
     public TeamSummaryDto updateTeamStats(
             @PathVariable Long id,

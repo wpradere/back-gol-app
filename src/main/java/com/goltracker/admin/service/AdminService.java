@@ -288,6 +288,16 @@ public class AdminService {
         return UserSummaryDto.from(user);
     }
 
+    // ── Recálculo masivo de estadísticas ──────────────────────────────────
+
+    @Transactional
+    public int recalculateAllTeamStats() {
+        List<com.goltracker.team.domain.Team> teams = teamRepository.findAll();
+        teams.forEach(this::recalculateTeamStats);
+        log.info("[Admin] Estadísticas recalculadas para {} equipos.", teams.size());
+        return teams.size();
+    }
+
     // ── Notificaciones de partidos próximos (llamado desde el scheduler) ──
 
     @Transactional
