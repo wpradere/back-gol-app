@@ -106,6 +106,10 @@ public class AdminService {
         log.info("Resultado partido {}: {} - {}. {} predicciones recalculadas.",
                 matchId, request.scoreA(), request.scoreB(), predictions.size());
 
+        // Actualizar estadísticas de ambos equipos
+        recalculateTeamStats(match.getTeamA());
+        recalculateTeamStats(match.getTeamB());
+
         return AdminMatchDto.from(match);
     }
 
@@ -125,6 +129,11 @@ public class AdminService {
             p.setPoints(null);
             predictionRepository.save(p);
         });
+
+        // Revertir estadísticas de ambos equipos
+        recalculateTeamStats(match.getTeamA());
+        recalculateTeamStats(match.getTeamB());
+
         log.info("Resultado del partido {} limpiado. Predicciones reabiertas.", matchId);
         return AdminMatchDto.from(match);
     }
@@ -333,5 +342,29 @@ public class AdminService {
     private Match getMatch(Long matchId) {
         return matchRepository.findById(matchId)
                 .orElseThrow(() -> ApiException.notFound("Partido no encontrado: " + matchId));
+    }
+
+    private void recalculateTeamStats(com.goltracker.team.domain.Team team) {
+        List<Match> played = matchRepository.findPlayedMatchesByTeamId(team.getId());
+        int pj = 0, g = 0, e = 0, p = 0, gf = 0, gc = 0;
+        for (Match m : played) {
+            if (m.getScoreA() == null || m.getScoreB() == null) continue;
+            boolean isA  = m.getTeamA().getId().equals(team.getId());
+            int scored   = isA ? m.getScoreA() : m.getScoreB();
+            int conceded = isA ? m.getScoreB() : m.getScoreA();
+            pj++;
+            gf += scored;
+            gc += conceded;
+            if (scored > conceded)      g++;
+            else if (scored == conceded) e++;
+            else                         p++;
+        }
+        team.setPlayed(pj);
+        team.setWon(g);
+        team.setDrawn(e);
+        team.setLost(p);
+        team.setGoalsFor(gf);
+        team.setGoalsAgainst(gc);
+        teamRepository.save(team);
     }
 }

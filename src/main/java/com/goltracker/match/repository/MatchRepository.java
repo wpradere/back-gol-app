@@ -33,6 +33,10 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
     @Query("SELECT m FROM Match m WHERE m.predictionsLocked = false AND m.kickoffAt IS NOT NULL AND m.kickoffAt <= :threshold")
     List<Match> findToAutoLock(LocalDateTime threshold);
 
+    /** Todos los partidos jugados de un equipo (para recalcular sus estadísticas). */
+    @Query("SELECT m FROM Match m WHERE m.played = true AND (m.teamA.id = :teamId OR m.teamB.id = :teamId)")
+    List<Match> findPlayedMatchesByTeamId(@Param("teamId") Long teamId);
+
     /** Partidos próximos (kickoff entre ahora y :limit) que aún no recibieron notificación. */
     @Query("SELECT m FROM Match m JOIN FETCH m.teamA JOIN FETCH m.teamB JOIN FETCH m.tournament " +
            "WHERE m.notificationSent = false AND m.kickoffAt IS NOT NULL " +
