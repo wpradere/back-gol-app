@@ -48,9 +48,11 @@ public class PredictionController {
         return predictionService.findAllForMatch(matchId);
     }
 
-    // GET /api/predictions/user/{username}  → historial de predicciones de un jugador
+    // GET /api/predictions/user/{username}?tournamentId=X  → historial de un jugador filtrado por torneo
     @GetMapping("/user/{username}")
-    public List<PredictionResponse> byUser(@PathVariable String username) {
-        return predictionService.findAllForUserPublic(username);
+    public List<PredictionResponse> byUser(
+            @PathVariable String username,
+            @RequestParam(required = false) Long tournamentId) {
+        return predictionService.findAllForUserPublic(username, tournamentId);
     }
 }

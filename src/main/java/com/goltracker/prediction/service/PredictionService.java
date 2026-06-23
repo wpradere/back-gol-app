@@ -62,10 +62,12 @@ public class PredictionService {
     }
 
     @Transactional(readOnly = true)
-    public List<PredictionResponse> findAllForUserPublic(String username) {
+    public List<PredictionResponse> findAllForUserPublic(String username, Long tournamentId) {
         User user = userService.findByUsername(username);
-        return predictionRepository.findByUserId(user.getId())
-                .stream()
+        var preds = (tournamentId != null)
+                ? predictionRepository.findByUserIdAndTournamentId(user.getId(), tournamentId)
+                : predictionRepository.findByUserId(user.getId());
+        return preds.stream()
                 .filter(p -> p.getMatch().isPlayed())
                 .map(PredictionResponse::from)
                 .toList();
