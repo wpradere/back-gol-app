@@ -1,0 +1,3 @@
+ALTER TABLE knockout_matches
+    ADD COLUMN IF NOT EXISTS kickoff_at TIMESTAMP,
+    ADD COLUMN IF NOT EXISTS predictions_locked BOOLEAN NOT NULL DEFAULT FALSE;
