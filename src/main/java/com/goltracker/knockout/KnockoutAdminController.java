@@ -28,9 +28,16 @@ public class KnockoutAdminController {
         return knockoutService.toggleEnabled();
     }
 
-    @PostMapping("/toggle-published")
-    public KnockoutBracketDto togglePublished() {
-        return knockoutService.togglePublished();
+    /** Publish a specific phase (R16, R8, R4, SEMI, FINAL) — validates all teams are assigned. */
+    @PostMapping("/publish-phase/{round}")
+    public KnockoutBracketDto publishPhase(@PathVariable String round) {
+        return knockoutService.publishPhase(round);
+    }
+
+    /** Unpublish a specific phase. */
+    @PostMapping("/unpublish-phase/{round}")
+    public KnockoutBracketDto unpublishPhase(@PathVariable String round) {
+        return knockoutService.unpublishPhase(round);
     }
 
     @PutMapping("/matches/{id}/teams")
