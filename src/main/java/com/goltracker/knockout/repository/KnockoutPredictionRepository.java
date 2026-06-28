@@ -10,7 +10,7 @@ import java.util.Optional;
 
 public interface KnockoutPredictionRepository extends JpaRepository<KnockoutPrediction, Long> {
 
-    @Query("SELECT p FROM KnockoutPrediction p JOIN FETCH p.match WHERE p.user.username = :username")
+    @Query("SELECT p FROM KnockoutPrediction p JOIN FETCH p.match m LEFT JOIN FETCH m.teamA LEFT JOIN FETCH m.teamB WHERE p.user.username = :username")
     List<KnockoutPrediction> findByUsername(@Param("username") String username);
 
     Optional<KnockoutPrediction> findByUserUsernameAndMatchId(String username, Integer matchId);

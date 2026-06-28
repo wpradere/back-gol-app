@@ -23,12 +23,16 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query(value = """
             SELECT u.username,
-                   COALESCE(SUM(p.points), 0)                             AS totalPoints,
-                   COUNT(p.id)                                             AS predicted,
-                   SUM(CASE WHEN p.points = 4  THEN 1 ELSE 0 END)         AS exactCount,
-                   SUM(CASE WHEN p.points > 0  THEN 1 ELSE 0 END)         AS correctCount
+                   COALESCE(SUM(c.points), 0)                             AS totalPoints,
+                   COUNT(c.id)                                             AS predicted,
+                   SUM(CASE WHEN c.points = 4  THEN 1 ELSE 0 END)         AS exactCount,
+                   SUM(CASE WHEN c.points > 0  THEN 1 ELSE 0 END)         AS correctCount
             FROM users u
-            LEFT JOIN predictions p ON p.user_id = u.id
+            LEFT JOIN (
+                SELECT user_id, id, points FROM predictions
+                UNION ALL
+                SELECT user_id, id, points FROM knockout_predictions
+            ) c ON c.user_id = u.id
             WHERE u.status = 'ACTIVE' AND u.role = 'USER'
             GROUP BY u.id, u.username
             ORDER BY totalPoints DESC, exactCount DESC, correctCount DESC
@@ -37,13 +41,17 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query(value = """
             SELECT u.username,
-                   COALESCE(SUM(p.points), 0)                             AS totalPoints,
-                   COUNT(p.id)                                             AS predicted,
-                   SUM(CASE WHEN p.points = 4  THEN 1 ELSE 0 END)         AS exactCount,
-                   SUM(CASE WHEN p.points > 0  THEN 1 ELSE 0 END)         AS correctCount
+                   COALESCE(SUM(c.points), 0)                             AS totalPoints,
+                   COUNT(c.id)                                             AS predicted,
+                   SUM(CASE WHEN c.points = 4  THEN 1 ELSE 0 END)         AS exactCount,
+                   SUM(CASE WHEN c.points > 0  THEN 1 ELSE 0 END)         AS correctCount
             FROM users u
-            LEFT JOIN predictions p ON p.user_id = u.id
-                   AND p.match_id IN (SELECT id FROM matches WHERE tournament_id = :tournamentId)
+            LEFT JOIN (
+                SELECT user_id, id, points FROM predictions
+                WHERE match_id IN (SELECT id FROM matches WHERE tournament_id = :tournamentId)
+                UNION ALL
+                SELECT user_id, id, points FROM knockout_predictions
+            ) c ON c.user_id = u.id
             WHERE u.status = 'ACTIVE' AND u.role = 'USER'
             GROUP BY u.id, u.username
             ORDER BY totalPoints DESC, exactCount DESC, correctCount DESC

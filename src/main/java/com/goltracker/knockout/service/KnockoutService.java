@@ -81,6 +81,16 @@ public class KnockoutService {
                 .toList();
     }
 
+    /** Played knockout predictions for public profile view (ranking/[username] page). */
+    @Transactional(readOnly = true)
+    public List<KnockoutPredictionDto> getPlayedUserPredictions(String username) {
+        return predictionRepo.findByUsername(username)
+                .stream()
+                .filter(p -> p.getMatch().isPlayed())
+                .map(KnockoutPredictionDto::from)
+                .toList();
+    }
+
     @Transactional
     public KnockoutPredictionDto upsertPrediction(String username, Integer matchId,
                                                    Integer scoreA, Integer scoreB) {

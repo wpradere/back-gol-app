@@ -37,10 +37,16 @@ public class KnockoutController {
         return knockoutService.getPlayedPublishedMatches();
     }
 
-    /** Current user's knockout predictions. */
+    /** Current user's knockout predictions (own). */
     @GetMapping("/predictions")
     public List<KnockoutPredictionDto> myPredictions(@AuthenticationPrincipal UserDetails user) {
         return knockoutService.getUserPredictions(user.getUsername());
+    }
+
+    /** Public view of another user's played knockout predictions (for profile/ranking pages). */
+    @GetMapping("/predictions/user/{username}")
+    public List<KnockoutPredictionDto> userPredictions(@PathVariable String username) {
+        return knockoutService.getPlayedUserPredictions(username);
     }
 
     /** Create or update a knockout prediction. */
