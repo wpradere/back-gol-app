@@ -15,5 +15,6 @@ public interface KnockoutPredictionRepository extends JpaRepository<KnockoutPred
 
     Optional<KnockoutPrediction> findByUserUsernameAndMatchId(String username, Integer matchId);
 
-    List<KnockoutPrediction> findByMatchId(Integer matchId);
+    @Query("SELECT p FROM KnockoutPrediction p JOIN FETCH p.user WHERE p.match.id = :matchId")
+    List<KnockoutPrediction> findByMatchId(@Param("matchId") Integer matchId);
 }

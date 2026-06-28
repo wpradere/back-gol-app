@@ -4,6 +4,7 @@ import com.goltracker.knockout.dto.KnockoutBracketDto;
 import com.goltracker.knockout.dto.KnockoutMatchDto;
 import com.goltracker.knockout.dto.KnockoutPredictionDto;
 import com.goltracker.knockout.service.KnockoutService;
+import com.goltracker.prediction.dto.MatchPredictionEntryDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -47,6 +48,12 @@ public class KnockoutController {
     @GetMapping("/predictions/user/{username}")
     public List<KnockoutPredictionDto> userPredictions(@PathVariable String username) {
         return knockoutService.getPlayedUserPredictions(username);
+    }
+
+    /** All users' predictions for a specific knockout match (for ranking match selector). */
+    @GetMapping("/predictions/match/{matchId}")
+    public List<MatchPredictionEntryDto> matchPredictions(@PathVariable Integer matchId) {
+        return knockoutService.getMatchPredictions(matchId);
     }
 
     /** Create or update a knockout prediction. */

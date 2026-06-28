@@ -91,6 +91,20 @@ public class KnockoutService {
                 .toList();
     }
 
+    /** All users' predictions for a specific knockout match (for the ranking match selector). */
+    @Transactional(readOnly = true)
+    public List<com.goltracker.prediction.dto.MatchPredictionEntryDto> getMatchPredictions(Integer matchId) {
+        return predictionRepo.findByMatchId(matchId)
+                .stream()
+                .map(p -> new com.goltracker.prediction.dto.MatchPredictionEntryDto(
+                        p.getUser().getUsername(),
+                        p.getPredictedScoreA(),
+                        p.getPredictedScoreB(),
+                        p.getPoints()
+                ))
+                .toList();
+    }
+
     @Transactional
     public KnockoutPredictionDto upsertPrediction(String username, Integer matchId,
                                                    Integer scoreA, Integer scoreB) {
