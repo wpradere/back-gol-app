@@ -255,6 +255,15 @@ public class KnockoutService {
     }
 
     @Transactional
+    public int autoLockDueMatches() {
+        LocalDateTime threshold = LocalDateTime.now().plusMinutes(30);
+        List<KnockoutMatch> tolock = matchRepo.findToAutoLock(threshold);
+        tolock.forEach(m -> m.setPredictionsLocked(true));
+        matchRepo.saveAll(tolock);
+        return tolock.size();
+    }
+
+    @Transactional
     public KnockoutMatchDto setKickoff(Integer matchId, LocalDateTime kickoffAt) {
         KnockoutMatch match = findMatch(matchId);
         match.setKickoffAt(kickoffAt);
