@@ -263,6 +263,46 @@ public class KnockoutService {
         return tolock.size();
     }
 
+    /** Manually set the winner of a drawn match (extra time / penalties). */
+    @Transactional
+    public KnockoutMatchDto setWinner(Integer matchId, Long winnerId) {
+        KnockoutMatch match = findMatch(matchId);
+        if (!match.isPlayed())
+            throw ApiException.badRequest("El partido no ha sido jugado todavía");
+
+        Team winner = teamRepo.findById(winnerId)
+                .orElseThrow(() -> ApiException.notFound("Equipo no encontrado"));
+        if ((match.getTeamA() == null || !match.getTeamA().getId().equals(winnerId)) &&
+            (match.getTeamB() == null || !match.getTeamB().getId().equals(winnerId))) {
+            throw ApiException.badRequest("El ganador debe ser uno de los dos equipos del partido");
+        }
+
+        // Remove previous winner from the next match if it changed
+        Team prevWinner = match.getWinner();
+        if (prevWinner != null && !prevWinner.getId().equals(winnerId) && match.getNextMatchId() != null) {
+            KnockoutMatch next = findMatch(match.getNextMatchId());
+            if ("A".equals(match.getNextSlot())) {
+                if (prevWinner.equals(next.getTeamA())) next.setTeamA(null);
+            } else {
+                if (prevWinner.equals(next.getTeamB())) next.setTeamB(null);
+            }
+            matchRepo.save(next);
+        }
+
+        match.setWinner(winner);
+        matchRepo.save(match);
+
+        // Advance winner to the next match
+        if (match.getNextMatchId() != null) {
+            KnockoutMatch next = findMatch(match.getNextMatchId());
+            if ("A".equals(match.getNextSlot())) next.setTeamA(winner);
+            else                                  next.setTeamB(winner);
+            matchRepo.save(next);
+        }
+
+        return KnockoutMatchDto.from(match);
+    }
+
     @Transactional
     public KnockoutMatchDto setKickoff(Integer matchId, LocalDateTime kickoffAt) {
         KnockoutMatch match = findMatch(matchId);

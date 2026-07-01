@@ -59,6 +59,14 @@ public class KnockoutAdminController {
         return knockoutService.resetResult(id);
     }
 
+    /** Manually assign the winner of a drawn match (extra time / penalties). */
+    @PutMapping("/matches/{id}/winner")
+    public KnockoutMatchDto setWinner(
+            @PathVariable Integer id,
+            @RequestBody Map<String, Long> body) {
+        return knockoutService.setWinner(id, body.get("winnerId"));
+    }
+
     @PutMapping("/matches/{id}/kickoff")
     public KnockoutMatchDto setKickoff(
             @PathVariable Integer id,
