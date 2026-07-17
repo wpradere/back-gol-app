@@ -10,5 +10,6 @@ public record KnockoutBracketDto(
         boolean r4Published,
         boolean semiPublished,
         boolean finalPublished,
+        boolean thirdPublished,
         List<KnockoutMatchDto> matches
 ) {}

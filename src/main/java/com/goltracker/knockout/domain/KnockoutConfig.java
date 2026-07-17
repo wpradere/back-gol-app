@@ -34,4 +34,7 @@ public class KnockoutConfig {
 
     @Column(name = "final_published", nullable = false)
     private boolean finalPublished = false;
+
+    @Column(name = "third_published", nullable = false)
+    private boolean thirdPublished = false;
 }

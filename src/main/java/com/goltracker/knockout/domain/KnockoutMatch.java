@@ -55,4 +55,10 @@ public class KnockoutMatch {
 
     @Column(name = "next_slot", length = 1)
     private String nextSlot;
+
+    @Column(name = "loser_next_match_id")
+    private Integer loserNextMatchId;
+
+    @Column(name = "loser_next_slot", length = 1)
+    private String loserNextSlot;
 }

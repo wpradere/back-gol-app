@@ -40,7 +40,8 @@ public class KnockoutService {
         if (!cfg.isEnabled()) throw ApiException.notFound("Bracket no disponible");
         // Returns bracket only if at least one phase is published
         boolean anyPublished = cfg.isR16Published() || cfg.isR8Published() ||
-                cfg.isR4Published() || cfg.isSemiPublished() || cfg.isFinalPublished();
+                cfg.isR4Published() || cfg.isSemiPublished() || cfg.isFinalPublished() ||
+                cfg.isThirdPublished();
         if (!anyPublished) throw ApiException.notFound("Bracket no publicado");
         return buildBracket(cfg);
     }
@@ -176,9 +177,9 @@ public class KnockoutService {
     public KnockoutBracketDto unpublishPhase(String round) {
         KnockoutConfig cfg = getConfig();
         setPhasePublished(cfg, round, false);
-        // Recalculate global published
         boolean anyPublished = cfg.isR16Published() || cfg.isR8Published() ||
-                cfg.isR4Published() || cfg.isSemiPublished() || cfg.isFinalPublished();
+                cfg.isR4Published() || cfg.isSemiPublished() || cfg.isFinalPublished() ||
+                cfg.isThirdPublished();
         cfg.setPublished(anyPublished);
         configRepo.save(cfg);
         return buildBracket(cfg);
@@ -218,6 +219,19 @@ public class KnockoutService {
             matchRepo.save(next);
         }
 
+        // Auto-advance loser to 3rd-place match (only for matches with loser routing)
+        if (match.getLoserNextMatchId() != null) {
+            Team loser = (winner != null)
+                    ? (winner.equals(match.getTeamA()) ? match.getTeamB() : match.getTeamA())
+                    : null;
+            if (loser != null) {
+                KnockoutMatch thirdPlace = findMatch(match.getLoserNextMatchId());
+                if ("A".equals(match.getLoserNextSlot())) thirdPlace.setTeamA(loser);
+                else                                       thirdPlace.setTeamB(loser);
+                matchRepo.save(thirdPlace);
+            }
+        }
+
         // Recalculate prediction points for this match
         recalculatePredictionPoints(match, scoreA, scoreB);
 
@@ -228,13 +242,17 @@ public class KnockoutService {
     public KnockoutMatchDto resetResult(Integer matchId) {
         KnockoutMatch match = findMatch(matchId);
         Team prevWinner = match.getWinner();
+        Team prevLoser = (prevWinner != null && match.getTeamA() != null && match.getTeamB() != null)
+                ? (prevWinner.equals(match.getTeamA()) ? match.getTeamB() : match.getTeamA())
+                : null;
+
         match.setScoreA(null);
         match.setScoreB(null);
         match.setPlayed(false);
         match.setWinner(null);
         matchRepo.save(match);
 
-        // Remove winner from next match if it's still that team
+        // Remove winner from next match
         if (prevWinner != null && match.getNextMatchId() != null) {
             KnockoutMatch next = findMatch(match.getNextMatchId());
             if ("A".equals(match.getNextSlot())) {
@@ -243,6 +261,17 @@ public class KnockoutService {
                 if (prevWinner.equals(next.getTeamB())) next.setTeamB(null);
             }
             matchRepo.save(next);
+        }
+
+        // Remove loser from 3rd-place match
+        if (prevLoser != null && match.getLoserNextMatchId() != null) {
+            KnockoutMatch thirdPlace = findMatch(match.getLoserNextMatchId());
+            if ("A".equals(match.getLoserNextSlot())) {
+                if (prevLoser.equals(thirdPlace.getTeamA())) thirdPlace.setTeamA(null);
+            } else {
+                if (prevLoser.equals(thirdPlace.getTeamB())) thirdPlace.setTeamB(null);
+            }
+            matchRepo.save(thirdPlace);
         }
 
         // Reset prediction points
@@ -337,6 +366,7 @@ public class KnockoutService {
                 cfg.isR4Published(),
                 cfg.isSemiPublished(),
                 cfg.isFinalPublished(),
+                cfg.isThirdPublished(),
                 matches
         );
     }
@@ -356,32 +386,35 @@ public class KnockoutService {
 
     private List<String> getPublishedRounds(KnockoutConfig cfg) {
         List<String> rounds = new ArrayList<>();
-        if (cfg.isR16Published())   rounds.add("R16");
-        if (cfg.isR8Published())    rounds.add("R8");
-        if (cfg.isR4Published())    rounds.add("R4");
-        if (cfg.isSemiPublished())  rounds.add("SEMI");
-        if (cfg.isFinalPublished()) rounds.add("FINAL");
+        if (cfg.isR16Published())    rounds.add("R16");
+        if (cfg.isR8Published())     rounds.add("R8");
+        if (cfg.isR4Published())     rounds.add("R4");
+        if (cfg.isSemiPublished())   rounds.add("SEMI");
+        if (cfg.isFinalPublished())  rounds.add("FINAL");
+        if (cfg.isThirdPublished())  rounds.add("3RD");
         return rounds;
     }
 
     private boolean isPhasePublished(KnockoutConfig cfg, String round) {
         return switch (round) {
-            case "R16"   -> cfg.isR16Published();
-            case "R8"    -> cfg.isR8Published();
-            case "R4"    -> cfg.isR4Published();
-            case "SEMI"  -> cfg.isSemiPublished();
-            case "FINAL" -> cfg.isFinalPublished();
-            default      -> false;
+            case "R16"  -> cfg.isR16Published();
+            case "R8"   -> cfg.isR8Published();
+            case "R4"   -> cfg.isR4Published();
+            case "SEMI" -> cfg.isSemiPublished();
+            case "FINAL"-> cfg.isFinalPublished();
+            case "3RD"  -> cfg.isThirdPublished();
+            default     -> false;
         };
     }
 
     private void setPhasePublished(KnockoutConfig cfg, String round, boolean value) {
         switch (round) {
-            case "R16"   -> cfg.setR16Published(value);
-            case "R8"    -> cfg.setR8Published(value);
-            case "R4"    -> cfg.setR4Published(value);
-            case "SEMI"  -> cfg.setSemiPublished(value);
-            case "FINAL" -> cfg.setFinalPublished(value);
+            case "R16"  -> cfg.setR16Published(value);
+            case "R8"   -> cfg.setR8Published(value);
+            case "R4"   -> cfg.setR4Published(value);
+            case "SEMI" -> cfg.setSemiPublished(value);
+            case "FINAL"-> cfg.setFinalPublished(value);
+            case "3RD"  -> cfg.setThirdPublished(value);
         }
     }
 
